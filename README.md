@@ -4,7 +4,8 @@
 
 ## Overview
 
-![image](./image/image1.jpeg)
+![image](./image/image1.jpeg)<br>
+**☝ 04:39**
 
 M5Stack Core2 用 錯視を利用した時計です。<br>
 上段に時間、下段に分を表示していますが、斜線に隠れてなかなか見えないことでしょう。
