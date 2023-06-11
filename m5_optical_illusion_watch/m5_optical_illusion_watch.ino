@@ -15,9 +15,9 @@
 //////////////////////////// カスタマイズ ////////////////////////////
 
 // ★NTP同期時に接続するWi-FiのSSID
-constexpr const char* ssid    = "Kiddie";
+constexpr const char* ssid    = "your SSID";
 // ★NTP同期時に接続するWi-Fiのpw
-constexpr const char* ssid_pw = "kiddie0456";
+constexpr const char* ssid_pw = "your SSID password";
 
 // ★LCD輝度段階
 const int brightness_0      =  30;      // <レベル0>  デフォルト  30
