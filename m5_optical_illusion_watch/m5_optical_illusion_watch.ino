@@ -1,5 +1,5 @@
 // m5_optical_illusion_watch.ino
-// version 0.3.0 | CC BY-NC-SA 4.0 | https://github.com/shiza4za/m5_optical_illusion_watch/blob/main/LICENSE.txt
+// version 0.2.0 | CC BY-NC-SA 4.0 | https://github.com/shiza4za/m5_optical_illusion_watch/blob/main/LICENSE.txt
 
 #include <iostream>
 #include <bitset>
@@ -19,16 +19,12 @@ constexpr const char* ssid    = "your SSID";
 // ★NTP同期時に接続するWi-Fiのpw
 constexpr const char* ssid_pw = "your SSID password";
 
-// ★LCD輝度段階
-const int brightness_0      =  30;      // <レベル0>  デフォルト  30
-const int brightness_1      =  85;      // <レベル1>  デフォルト  85
-const int brightness_2      = 200;      // <レベル2>  デフォルト 200
 
-// ★LCD輝度段階切替のデフォルトレベル
-int BtnB_lcd_lv = 1;    // デフォルト 1
+// ★LCD輝度(0〜255で設定可)
+const int brightness      = 85;      // デフォルト 85
 
 // ★デフォルトで答え合わせを表示する/しない設定
-bool BtnB_dec_ck     = false;    // デフォルト false
+bool      BtnB_dec_ck     = false;    // デフォルト false
 
 // ★背景色
 const int color_lcd       = BLACK;    // デフォルト BLACK
@@ -52,7 +48,7 @@ const int color_brt       = 0xfd66;   // デフォルト黄 0xfd66
 // 　※ミリ秒ではなく秒です
 // 　※多分58秒未満を推奨
 // 　※0にすると、勝手にオフしなくなります
-#define BUTTON_TIMEOUT 0   // デフォルト 0
+#define BUTTON_TIMEOUT 30   // デフォルト 30
 
 // ★BtnC押下時・または一定秒間操作がなかったときに、
 // 　powerOffまたはdeepSleepする設定
@@ -60,7 +56,7 @@ const int color_brt       = 0xfd66;   // デフォルト黄 0xfd66
 // 　・falseでdeepSleep関数実行。次回画面など触れると再起動
 bool poweroffmode = true;   // デフォルト true
 
-// ★稼働中のディレイ(ms)
+// ★稼働時のディレイ(ms)
 const int delay_in_loop = 20;   // デフォルト 20
 
 /////////////////////////////////////////////////////////////////////
@@ -75,8 +71,7 @@ auto start_time_local = localtime(&start_time);
 int start_time_local_sec = start_time_local->tm_sec;
 const int defy = 20;
 const char* const week_str[7] = {"Sun", "Mon", "Tue", "Wed", "Thr", "Fri", "Sat"};
-// bool BtnB_lcd_ck = false;
-int brightness = 0;
+bool BtnB_lcd_ck = false;
 
 int h_1lv  = 0;
 int h_10lv = 0;
@@ -114,7 +109,7 @@ void connect() {
 
   // バージョン
   M5.Lcd.setTextColor(0xad55, color_lcd);
-  M5.Display.printf("\nversion 0.3.0\n\n");
+  M5.Display.printf("\nversion 0.1.0\n\n");
 
   // SSIDの参考表示
   M5.Lcd.setTextColor(color_text, color_lcd);
@@ -184,18 +179,14 @@ void poweroffTask() {
 
 
 // LCD輝度状態によってBRTの文字と色変更
-void displayBrt(int BtnB_lcd_lv) {
-  M5.Lcd.setCursor(132, 16*14);
-  if        (BtnB_lcd_lv == 0) {
-    M5.Lcd.setTextColor(color_text, color_lcd);
-    M5.Display.printf("BRT:0");
-  } else if (BtnB_lcd_lv == 1) {
-    M5.Lcd.setTextColor(color_text, color_lcd);
-    M5.Display.printf("BRT:1");
-  } else if (BtnB_lcd_lv == 2) {
-    M5.Lcd.setTextColor(color_brt, color_lcd);
-    M5.Display.printf("BRT:2");
+void displayBrt(bool BtnB_lcd_ck) {
+  M5.Lcd.setCursor(145, 16*14);
+  if (BtnB_lcd_ck == true) {
+   M5.Lcd.setTextColor(color_brt, color_lcd);
+  } else if (BtnB_lcd_ck == false) {
+   M5.Lcd.setTextColor(color_text, color_lcd);
   }
+  M5.Display.printf("BRT");
   M5.Lcd.setTextColor(color_text, color_lcd);
 
   M5.Lcd.setCursor(0, 0);
@@ -212,9 +203,9 @@ void displayBattery() {
   //  19- 0 赤
   int battery_level = M5.Power.getBatteryLevel();
   M5.Lcd.setCursor(0, 16*14);
-  if      (battery_level <= 100 && battery_level >= 50) { M5.Lcd.setTextColor(color_bt_good, color_lcd); }
-  else if (battery_level <=  49 && battery_level >= 20) { M5.Lcd.setTextColor(color_bt_hmm, color_lcd); }
-  else if (battery_level <=  19                       ) { M5.Lcd.setTextColor(color_bt_danger, color_lcd); }
+  if      (battery_level <= 100 && battery_level > 50) { M5.Lcd.setTextColor(color_bt_good, color_lcd); }
+  else if (battery_level <=  50 && battery_level > 20) { M5.Lcd.setTextColor(color_bt_hmm, color_lcd); }
+  else if (battery_level <=  20                      ) { M5.Lcd.setTextColor(color_bt_danger, color_lcd); }
   M5.Display.printf("%03d", battery_level);
   M5.Lcd.setTextColor(color_text, color_lcd);
 }
@@ -574,10 +565,6 @@ void number(int x, int y, int gcolor_1, int gcolor_2, int num, bool btnb) {
   else if (num == 9) { nine( x, y, gcolor_1, gcolor_2, btnb); }
 }
 
-
-
-
-
 // ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -591,13 +578,6 @@ void setup() {
 
   M5.begin(cfg);
   M5.Displays(0).setTextSize(2);
-  if        (BtnB_lcd_lv == 0) {
-    brightness = brightness_0;
-  } else if (BtnB_lcd_lv == 1) {
-    brightness = brightness_1;
-  } else if (BtnB_lcd_lv == 2) {
-    brightness = brightness_2;
-  }
   M5.Lcd.setBrightness(brightness);
 
   firstScreen();
@@ -623,7 +603,7 @@ void loop() {
   vTaskDelay(delay_in_loop);
   M5.update();
 
-  displayBrt(BtnB_lcd_lv);
+  displayBrt(BtnB_lcd_ck);
 
 
   auto now_time = time(nullptr);
@@ -669,19 +649,17 @@ void loop() {
       }
     }
 
-    // BtnB ちょっと長押しでLCD輝度段階切替
+    // BtnB ちょっと長押しでLCD輝度MAX(brightness値<->MAX)
     if (M5.BtnB.wasHold()) {
-      if        (BtnB_lcd_lv == 0) {
-        M5.Lcd.setBrightness(brightness_1);
-        BtnB_lcd_lv = 1;
-      } else if (BtnB_lcd_lv == 1) {
-        M5.Lcd.setBrightness(brightness_2);
-        BtnB_lcd_lv = 2;
-      } else if (BtnB_lcd_lv == 2) {
-        M5.Lcd.setBrightness(brightness_0);
-        BtnB_lcd_lv = 0;
+      if (BtnB_lcd_ck == false) {
+        BtnB_lcd_ck = true;
+        M5.Lcd.setBrightness(255);
+        start_time_local_sec = now_time_local_sec;
+      } else if (BtnB_lcd_ck == true) {
+        BtnB_lcd_ck = false;
+        M5.Lcd.setBrightness(brightness);
+        start_time_local_sec = now_time_local_sec;
       }
-      start_time_local_sec = now_time_local_sec;
     }
 
     // BtnC ちょっと長押しで起動オフ
@@ -692,6 +670,35 @@ void loop() {
 
 
   backPattern(BtnB_dec_ck);
+
+
+
+  // zero(0, 0);
+  // vTaskDelay(1000);
+  // one(0, 0);
+  // vTaskDelay(1000);
+  // two(0, 0);
+  // vTaskDelay(1000);
+  // three(0, 0);
+  // vTaskDelay(1000);
+  // four(0, 0);
+  // vTaskDelay(1000);
+  // five(0, 0);
+  // vTaskDelay(1000);
+  // six(0, 0);
+  // vTaskDelay(1000);
+  // seven(0, 0);
+  // vTaskDelay(1000);
+  // eight(0, 0);
+  // vTaskDelay(1000);
+  // nine(0, 0);
+  // vTaskDelay(1000);
+
+
+
+
+
+
 
 
 
@@ -744,6 +751,12 @@ void loop() {
   // m_1lv = 0;
   number(6+3, 6, const_global_color_1, const_global_color_2, m_1lv, BtnB_dec_ck);
   number(0+3, 6, const_global_color_1, const_global_color_2, m_10lv, BtnB_dec_ck);
+
+
+
+
+
+
 
   M5.Display.setTextSize(2);
   //
